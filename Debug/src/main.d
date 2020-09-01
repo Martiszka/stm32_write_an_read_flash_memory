@@ -48,8 +48,7 @@ src/main.o: ../src/main.c \
  C:/Users/Marta/workspace/STM32F1_flash_memory/HAL_Driver/Inc/stm32f1xx_hal_pcd.h \
  C:/Users/Marta/workspace/STM32F1_flash_memory/HAL_Driver/Inc/stm32f1xx_ll_usb.h \
  C:/Users/Marta/workspace/STM32F1_flash_memory/HAL_Driver/Inc/stm32f1xx_hal_pcd_ex.h \
- C:/Users/Marta/workspace/STM32F1_flash_memory/HAL_Driver/Inc/stm32f1xx_hal_hcd.h \
- C:/Users/Marta/workspace/STM32F1_flash_memory/inc/flash.h
+ C:/Users/Marta/workspace/STM32F1_flash_memory/HAL_Driver/Inc/stm32f1xx_hal_hcd.h
 
 C:/Users/Marta/workspace/STM32F1_flash_memory/CMSIS/device/stm32f1xx.h:
 
@@ -150,5 +149,3 @@ C:/Users/Marta/workspace/STM32F1_flash_memory/HAL_Driver/Inc/stm32f1xx_ll_usb.h:
 C:/Users/Marta/workspace/STM32F1_flash_memory/HAL_Driver/Inc/stm32f1xx_hal_pcd_ex.h:
 
 C:/Users/Marta/workspace/STM32F1_flash_memory/HAL_Driver/Inc/stm32f1xx_hal_hcd.h:
-
-C:/Users/Marta/workspace/STM32F1_flash_memory/inc/flash.h:

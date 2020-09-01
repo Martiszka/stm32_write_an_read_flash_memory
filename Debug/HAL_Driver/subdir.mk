@@ -4,26 +4,17 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
-../src/main.c \
-../src/stm32f1xx_it.c \
-../src/syscalls.c \
-../src/system_stm32f1xx.c 
+../HAL_Driver/Flash_write_and_read.c 
 
 OBJS += \
-./src/main.o \
-./src/stm32f1xx_it.o \
-./src/syscalls.o \
-./src/system_stm32f1xx.o 
+./HAL_Driver/Flash_write_and_read.o 
 
 C_DEPS += \
-./src/main.d \
-./src/stm32f1xx_it.d \
-./src/syscalls.d \
-./src/system_stm32f1xx.d 
+./HAL_Driver/Flash_write_and_read.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes
-src/%.o: ../src/%.c
+HAL_Driver/%.o: ../HAL_Driver/%.c
 	@echo 'Building file: $<'
 	@echo 'Invoking: MCU GCC Compiler'
 	@echo $(PWD)
