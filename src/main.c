@@ -1,12 +1,16 @@
 #include <string.h>
 #include "stm32f1xx.h"
 
-
 UART_HandleTypeDef uart;
 
 uint32_t StartPageAddress = 0x0801FC00 ;
-uint32_t StartAddress = 0x0801FC00 ;
+uint8_t new_data[100] , i=0;
+char write_data[100] , read_data[100] ;
 
+void sendChar(char c)
+{
+	HAL_UART_Transmit(&uart, (uint8_t*)&c, 1, 1000);
+}
 void sendString(char* s){
 	HAL_UART_Transmit(&uart, (uint8_t*)s, strlen(s), 1000);
 }
@@ -14,7 +18,7 @@ void sendString(char* s){
 static uint32_t getPage(uint32_t Address){
   for (int indx=0; indx<128; indx++){
       if((Address < (0x08000000 + (1024 *(indx+1))) ) && (Address >= (0x08000000 + 1024*indx))){
-          return (0x08000000 + 1024*indx);
+    	  return (0x08000000 + 1024*indx);
       }
   }
   return -1;
@@ -22,20 +26,21 @@ static uint32_t getPage(uint32_t Address){
 
 uint32_t flashWriteData(uint8_t *DATA_8){
 
-	uint32_t DATA_32[(strlen((char*)DATA_8)/4)+(int)((strlen((char*)DATA_8)%4) != 0)] ;
+	StartPageAddress = 0x0801FC00 ;
+	volatile uint32_t DATA_32[(strlen((char*)DATA_8)/4)+(int)((strlen((char*)DATA_8)%4) != 0)] ;
 	memset((uint8_t*)DATA_32, 0, strlen((char*)DATA_32));
 	strcpy((char*)DATA_32, (char*)DATA_8);
 
 	static FLASH_EraseInitTypeDef EraseInitStruct;
-	uint32_t PAGEError;
-	int sofar=0;
+	volatile uint32_t PAGEError;
+	volatile uint32_t sofar = 0;
 
-	int numberofwords = (strlen(DATA_32)/4) + ((strlen(DATA_32) % 4) != 0);
+	volatile uint32_t numberofwords = (strlen(DATA_32)/4) + ((strlen(DATA_32) % 4) != 0);
 
 	HAL_FLASH_Unlock();
 
 	uint32_t StartPage = getPage(StartPageAddress);
-	uint32_t EndPageAdress = StartPageAddress + numberofwords*4;
+	uint32_t EndPageAdress = StartPageAddress + numberofwords*4 ;
 	uint32_t EndPage = getPage(EndPageAdress);
 
 	EraseInitStruct.TypeErase   = FLASH_TYPEERASE_PAGES;
@@ -61,15 +66,15 @@ uint32_t flashWriteData(uint8_t *DATA_8){
 }
 
 void flashReadData(uint8_t *DATA_8){
-	uint32_t DATA_32, index = 0 ;
+	StartPageAddress = 0x0801FC00 ;
+	volatile uint32_t DATA_32, index = 0 ;
 	while (1){
-		DATA_32 = *( uint32_t*)(StartAddress+index);
+		DATA_32 = *( uint32_t*)(StartPageAddress+index);
 
 		if (DATA_32 == 0xffffffff){
 			DATA_32 = '\0';
 			break;
 		}
-
 		DATA_8[index] = (uint8_t)DATA_32;
 		DATA_8[index + 1] = (uint8_t)(DATA_32 >> 8);
 		DATA_8[index + 2] = (uint8_t)(DATA_32 >> 16);
@@ -98,7 +103,7 @@ int main(void){
 	HAL_GPIO_Init(GPIOA, &gpio);
 
 	uart.Instance = USART2;
-	uart.Init.BaudRate = 115200;
+	uart.Init.BaudRate = 9600;
 	uart.Init.WordLength = UART_WORDLENGTH_8B;
 	uart.Init.Parity = UART_PARITY_NONE;
 	uart.Init.StopBits = UART_STOPBITS_1;
@@ -107,22 +112,33 @@ int main(void){
 	uart.Init.Mode = UART_MODE_TX_RX;
 	HAL_UART_Init(&uart);
 
-	char write_data[50];
-	memset(write_data, 0, sizeof(write_data));
-	strcpy(write_data, "Test1");
-	flashWriteData((uint8_t*)write_data) ;
-
-	char read_data[50];
+	//memset(write_data, 0, sizeof(write_data));
+	//flashWriteData((uint8_t*)write_data) ;
 
 	while (1){
+
 		if (__HAL_UART_GET_FLAG(&uart, UART_FLAG_RXNE) == SET){
 			uint8_t value;
 			HAL_UART_Receive(&uart, &value, 1, 100);
+			sendChar(value) ;
 
-			memset(read_data, 0, sizeof(read_data));
-			flashReadData((uint8_t*)read_data);
-			sendString(read_data) ;
-			sendString("\r\n") ;
+			if(value == '\r' || value=='\n' ){
+				memset(write_data, 0, sizeof(write_data));
+				memset(read_data, 0, sizeof(read_data));
+				flashReadData((uint8_t*)write_data);
+				uint8_t size = strlen((char*)write_data) ;
+				for(uint8_t index=0 ; index<i ; index++)
+					write_data[index+size] = new_data[index] ;
+				flashWriteData((uint8_t*)write_data) ;
+				flashReadData((uint8_t*)read_data) ;
+				sendString(read_data) ;
+				sendString("\n\r") ;
+				i=0;
+			}
+			else{
+				new_data[i]=value ;
+				i++;
+			}
 		}
 	}
 }
