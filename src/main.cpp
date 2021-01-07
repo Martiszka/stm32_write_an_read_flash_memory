@@ -1,10 +1,16 @@
-#include "Flashusing.h"
+#include "stm32f1xx.h"
+#include "stm32f1xx_nucleo.h"
+#include "Flash_data.h"
+Flash_data *flash_data1 , *flash_data2;
 
-Flash_using *flash ;
+int main(void)
+{
+	flash_data1 = new Flash_data() ;
+	flash_data2 = new Flash_data() ;
+	uint8_t tab[] ="Test1";
+	flash_data1->setData((uint8_t*)tab) ;
 
-
-int main(void){
-
-	flash = new Flash_using ;
+	uint8_t tab2[] = "Test2" ;
+	flash_data2->setData((uint8_t*)tab2) ;
 
 }
