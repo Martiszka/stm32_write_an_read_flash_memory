@@ -11,7 +11,7 @@ public:
 		uint32_t *DATA_32 ;
 		uint8_t *data_bytes;
 	};
-	data_32 data, readData ;
+	data_32 data ;
 	Flash_data();
    ~Flash_data();
 	void setData(uint8_t *dane) ;

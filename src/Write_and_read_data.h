@@ -7,11 +7,8 @@
 
 class Write_and_read_data {
 public:
-	union data_u{
-		uint8_t TabInt[100] ;
-		char TabChar[100] ;
-	};
-	data_u samedata;
+
+
 	Write_and_read_data();
 
 	virtual ~Write_and_read_data();
@@ -21,7 +18,7 @@ public:
     uint32_t getPage(uint32_t Address);
 	uint32_t flashWriteData(uint8_t *DATA_8) ;
 	void flashReadData(uint8_t *DATA_8) ;
-	void writeNewData(uint8_t *data_8) ;
+	void writeNewData(uint8_t *new_data_8, uint8_t *data_8) ;
 	void clearMemory() ;
 private:
 	UART_HandleTypeDef uart;
