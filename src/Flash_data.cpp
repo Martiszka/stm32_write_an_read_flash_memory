@@ -15,7 +15,7 @@ void Flash_data::setData(){
 
 
 int Flash_data::getDataSize(){
-	return sizeof(flashData);
+	return sizeof(flashData); //
 }
 
 uint8_t* Flash_data::getData(){

@@ -31,21 +31,37 @@ Write_and_read_data::Write_and_read_data() {
 
 }
 uint32_t Write_and_read_data::flashWriteData(uint8_t *DATA_8 , uint32_t size){
-		uint32_t numberofwords;
+
 		uint32_t StartAddress = StartPageAddress;
-		uint32_t DATA_32[(strlen((char*)DATA_8)/4)+(int)((strlen((char*)DATA_8)%4) != 0)] ;
+		uint32_t pageToWrite ;
+
+		int PageSize = size / 4;
+			if(size % 4 > 0){
+				PageSize++;
+			}
+
+			uint32_t DATA_32 [PageSize];
+
+			union dataToFlashUnion{
+				uint32_t *dataToFlash;
+				uint8_t *bytes;
+			};
+
+			dataToFlashUnion dataToFlash;
+			dataToFlash.dataToFlash = DATA_32;
+
+			for(int i = 0; i < size; i++){
+				dataToFlash.bytes[i] =DATA_8[i];
+			}
+
+		uint32_t numberofwords=pageToWrite ;
+
 		memset((uint8_t*)DATA_32, 0, strlen((char*)DATA_32));
 		strcpy((char*)DATA_32, (char*)DATA_8);
 
 		static FLASH_EraseInitTypeDef EraseInitStruct;
 		uint32_t PAGEError;
 		volatile uint32_t sofar = 0;
-
-		if( size%4 != 0 )
-			numberofwords++ ;
-		numberofwords += size/4 ;
-
-		//volatile uint32_t numberofwords = (strlen((char*)DATA_32)/4) + ((strlen((char*)DATA_32) % 4) != 0);
 
 		HAL_FLASH_Unlock();
 
