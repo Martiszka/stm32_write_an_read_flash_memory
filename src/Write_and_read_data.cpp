@@ -28,6 +28,8 @@ Write_and_read_data::Write_and_read_data() {
 	uart.Init.Mode = UART_MODE_TX_RX;
 	HAL_UART_Init(&uart);
 	clearMemory() ;
+
+
 	/*
 	while (1){
 
@@ -58,18 +60,24 @@ Write_and_read_data::Write_and_read_data() {
 	}
 	*/
 }
-void Write_and_read_data::writeNewData(uint8_t *new_data_8, uint8_t *data_8){
+void Write_and_read_data::writeNewData(char *new_data_8, char *data_8){
 
+	uint8_t a=0 ; //, b=0 ;
 	flashReadData((uint8_t*)data_8);
-	//uint8_t size =*(&data_8 + 1) - data_8 ;
-	uint8_t a=0, b=0 ;
-	while( data_8[a] != '\0')
-		a++ ;
-	while( new_data_8[b] != '\0'){
-		data_8[a+b] = new_data_8[b] ;
-		b++ ;
+	uint8_t size = strlen((char*)data_8) ;
+	if( data_8[0] == '\0'){
+			size=1;
+	//		char tabs[2]={'X'} ;
+	//		flashWriteData((uint8_t*)tabs) ;
 	}
+	while(new_data_8[a] != '\0'){
+		data_8[size+a] = new_data_8[a] ;
+		a++ ;
+		sendString("While \r\n") ;
+	}
+
 	flashWriteData((uint8_t*)data_8) ;
+	sendString("\r\n") ;
 	flashReadData((uint8_t*)read_data) ;
 	sendString(read_data) ;
 	memset(read_data, 0, sizeof(read_data));
@@ -150,11 +158,10 @@ uint32_t Write_and_read_data::getPage(uint32_t Address){
 }
 
 void Write_and_read_data::clearMemory(){
-	memset(write_data, 0, sizeof(write_data));
-	flashWriteData((uint8_t*)write_data) ;
+	memset(read_data, 0, sizeof(read_data));
+	flashWriteData((uint8_t*)read_data) ;
 }
 
 Write_and_read_data::~Write_and_read_data() {
 	// TODO Auto-generated destructor stub
 }
-

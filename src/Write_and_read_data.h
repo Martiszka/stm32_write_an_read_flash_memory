@@ -18,13 +18,12 @@ public:
     uint32_t getPage(uint32_t Address);
 	uint32_t flashWriteData(uint8_t *DATA_8) ;
 	void flashReadData(uint8_t *DATA_8) ;
-	void writeNewData(uint8_t *new_data_8, uint8_t *data_8) ;
+	void writeNewData(char *new_data_8, char *data_8) ;
 	void clearMemory() ;
 private:
 	UART_HandleTypeDef uart;
 	uint32_t StartPageAddress = 0x0801FC00 ;
-	uint8_t new_data[100] , i=0;
-	char write_data[100] , read_data[100] ;
+	char read_data[100] ;
 };
 
 #endif /* WRITE_AND_READ_DATA_H_ */

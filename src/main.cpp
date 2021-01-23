@@ -7,9 +7,9 @@ int main(void)
 {
 	flash_data1 = new Flash_data() ;
 	flash_data2 = new Flash_data() ;
-	uint8_t tab[] ="Test3";
-	flash_data1->setData((uint8_t*)tab) ;
+	char tab[] ="Test3";
+	flash_data1->setData((char*)tab) ;
 
 	uint8_t tab2[] = "Test4" ;
-	flash_data2->setData((uint8_t*)tab2) ;
+	flash_data2->setData((char*)tab2) ;
 }

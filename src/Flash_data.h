@@ -8,13 +8,14 @@ private:
 public:
 	Write_and_read_data *write ;
 	union data_32{
-		uint32_t *DATA_32 ;
-		uint8_t *data_bytes;
+		uint32_t DATA_32[100] ;
+		uint8_t data_bytes[400];
+		char	data_char[400];
 	};
 	data_32 data ;
 	Flash_data();
    ~Flash_data();
-	void setData(uint8_t *dane) ;
+	void setData(char *dane) ;
 	uint32_t* getData() ;
 };
 
