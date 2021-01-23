@@ -8,11 +8,18 @@ Flash_data::~Flash_data() {
 	// TODO Auto-generated destructor stub
 }
 
-void Flash_data::setData(char *dane){
+void Flash_data::setData(){
 	write->sendString("\r\n") ;
-	write->writeNewData(dane, data.data_char) ;
+	write->flashWriteData(getData(), getDataSize()) ;
 }
 
-uint32_t* Flash_data::getData(){
-	return data.DATA_32 ;
+
+int Flash_data::getDataSize(){
+	return sizeof(flashData);
 }
+
+uint8_t* Flash_data::getData(){
+	return flashDataBuffer.bytes;
+}
+
+

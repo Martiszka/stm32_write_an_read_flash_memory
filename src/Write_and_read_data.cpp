@@ -29,62 +29,9 @@ Write_and_read_data::Write_and_read_data() {
 	HAL_UART_Init(&uart);
 	clearMemory() ;
 
-
-	/*
-	while (1){
-
-		if (__HAL_UART_GET_FLAG(&uart, UART_FLAG_RXNE) == SET){
-			uint8_t value;
-			HAL_UART_Receive(&uart, &value, 1, 100);
-			sendChar(value) ;
-
-			if(value == '\r' || value=='\n' ){
-				memset(write_data, 0, sizeof(write_data));
-				memset(read_data, 0, sizeof(read_data));
-				flashReadData((uint8_t*)write_data);
-				uint8_t size = strlen((char*)write_data) ;
-				for(uint8_t index=0 ; index<i ; index++)
-					write_data[index+size] = new_data[index] ;
-				flashWriteData((uint8_t*)write_data) ;
-				flashReadData((uint8_t*)read_data) ;
-				sendString(read_data) ;
-				sendString("\r\n");
-				i=0;
-				memset(new_data, 0, sizeof(new_data));
-			}
-			else{
-				new_data[i]=value ;
-				i++;
-			}
-		}
-	}
-	*/
 }
-void Write_and_read_data::writeNewData(char *new_data_8, char *data_8){
-
-	uint8_t a=0 ; //, b=0 ;
-	flashReadData((uint8_t*)data_8);
-	uint8_t size = strlen((char*)data_8) ;
-	if( data_8[0] == '\0'){
-			size=1;
-	//		char tabs[2]={'X'} ;
-	//		flashWriteData((uint8_t*)tabs) ;
-	}
-	while(new_data_8[a] != '\0'){
-		data_8[size+a] = new_data_8[a] ;
-		a++ ;
-		sendString("While \r\n") ;
-	}
-
-	flashWriteData((uint8_t*)data_8) ;
-	sendString("\r\n") ;
-	flashReadData((uint8_t*)read_data) ;
-	sendString(read_data) ;
-	memset(read_data, 0, sizeof(read_data));
-
-}
-uint32_t Write_and_read_data::flashWriteData(uint8_t *DATA_8){
-
+uint32_t Write_and_read_data::flashWriteData(uint8_t *DATA_8 , uint32_t size){
+		uint32_t numberofwords;
 		uint32_t StartAddress = StartPageAddress;
 		uint32_t DATA_32[(strlen((char*)DATA_8)/4)+(int)((strlen((char*)DATA_8)%4) != 0)] ;
 		memset((uint8_t*)DATA_32, 0, strlen((char*)DATA_32));
@@ -94,7 +41,11 @@ uint32_t Write_and_read_data::flashWriteData(uint8_t *DATA_8){
 		uint32_t PAGEError;
 		volatile uint32_t sofar = 0;
 
-		volatile uint32_t numberofwords = (strlen((char*)DATA_32)/4) + ((strlen((char*)DATA_32) % 4) != 0);
+		if( size%4 != 0 )
+			numberofwords++ ;
+		numberofwords += size/4 ;
+
+		//volatile uint32_t numberofwords = (strlen((char*)DATA_32)/4) + ((strlen((char*)DATA_32) % 4) != 0);
 
 		HAL_FLASH_Unlock();
 
@@ -158,8 +109,7 @@ uint32_t Write_and_read_data::getPage(uint32_t Address){
 }
 
 void Write_and_read_data::clearMemory(){
-	memset(read_data, 0, sizeof(read_data));
-	flashWriteData((uint8_t*)read_data) ;
+
 }
 
 Write_and_read_data::~Write_and_read_data() {
