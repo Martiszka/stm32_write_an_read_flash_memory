@@ -1,3 +1,7 @@
+#define STM32_F1
+//#define STM32_F4
+//#define STM32_F7  // F756xx, F74xxx
+
 #include "Write_and_read_data.h"
 
 Write_and_read_data::Write_and_read_data() {
@@ -27,84 +31,105 @@ Write_and_read_data::Write_and_read_data() {
 	uart.Init.OverSampling = UART_OVERSAMPLING_16;
 	uart.Init.Mode = UART_MODE_TX_RX;
 	HAL_UART_Init(&uart);
-	clearMemory() ;
 
 }
-uint32_t Write_and_read_data::flashWriteData(uint8_t *DATA_8 , uint32_t size){
+uint32_t Write_and_read_data::flashWriteData(uint8_t *DATA_8 , int size){
 
-		uint32_t StartAddress = StartPageAddress;
-		uint32_t pageToWrite ;
+	static FLASH_EraseInitTypeDef EraseInitStruct;
+	uint32_t PAGEError ;
 
-		int PageSize = size / 4;
-			if(size % 4 > 0){
-				PageSize++;
-			}
+#ifdef STM32_F1
+		uint32_t IncAddress = 4 ;
+		uint32_t *DATA ;
+		uint32_t StartAddress = StartPageAddress = 0x0801F800 ;
+		uint32_t ProgramType = FLASH_TYPEPROGRAM_WORD ;
+		uint32_t ErrorType = PAGEError ;
 
-			uint32_t DATA_32 [PageSize];
+		int NumberOfWords = size / 4;
+		if(size % 4 > 0)
+			NumberOfWords++;
 
-			union dataToFlashUnion{
-				uint32_t *dataToFlash;
-				uint8_t *bytes;
-			};
+		uint32_t DATA_32[NumberOfWords];
 
-			dataToFlashUnion dataToFlash;
-			dataToFlash.dataToFlash = DATA_32;
+		union dataToFlashUnion{
+			uint32_t *dataToFlash;
+			uint8_t *bytes;
+		};
 
-			for(int i = 0; i < size; i++){
-				dataToFlash.bytes[i] =DATA_8[i];
-			}
+		dataToFlashUnion dataToFlash;
+		dataToFlash.dataToFlash = DATA_32;
 
-		uint32_t numberofwords=pageToWrite ;
-
-		memset((uint8_t*)DATA_32, 0, strlen((char*)DATA_32));
-		strcpy((char*)DATA_32, (char*)DATA_8);
-
-		static FLASH_EraseInitTypeDef EraseInitStruct;
-		uint32_t PAGEError;
-		volatile uint32_t sofar = 0;
+		for(int i = 0; i < size; i++){
+			dataToFlash.bytes[i] = DATA_8[i];
+		}
+		DATA = &DATA_32[0] ;
 
 		HAL_FLASH_Unlock();
 
 		uint32_t StartPage = getPage(StartAddress);
-		uint32_t EndPageAdress = StartAddress + numberofwords*4 ;
+		uint32_t EndPageAdress = StartAddress + NumberOfWords*4 ;
 		uint32_t EndPage = getPage(EndPageAdress);
 
 		EraseInitStruct.TypeErase   = FLASH_TYPEERASE_PAGES;
 		EraseInitStruct.PageAddress = StartPage;
 		EraseInitStruct.NbPages     = ((EndPage - StartPage)/FLASH_PAGE_SIZE) +1;
 
-		if (HAL_FLASHEx_Erase(&EraseInitStruct, &PAGEError) != HAL_OK){
+#endif
+
+#ifdef STM32_F4
+		StartPageAddress = StartAddress = 0x08010000 ;
+		uint32_t FlashSector = FLASH_SECTOR_4 ;  //64 Kbytes
+#endif
+
+#ifdef STM32_F7
+		StartPageAddress = StartAddress = 0x08018000 ;
+		uint32_t FlashSector = FLASH_SECTOR_3 ;
+#endif
+
+#if defined (STM32_F4) || defined (STM32_F7)
+		NumberOfWords = size ;
+		uint32_t IncAddress = 1 ;
+		uint8_t *DATA = &DATA_8[0]  ;
+		uint32_t ProgramType = FLASH_TYPEPROGRAM_BYTE ;
+		uint32_t ErrorType = SECTORError ;
+
+		HAL_FLASH_Unlock();
+
+		EraseInitStruct.TypeErase     = FLASH_TYPEERASE_SECTORS;
+		EraseInitStruct.VoltageRange  = FLASH_VOLTAGE_RANGE_3;
+		EraseInitStruct.Sector        = FlashSector ;
+		EraseInitStruct.NbSectors     = 1 ;
+
+#endif
+
+	int sofar = 0 ;
+	if (HAL_FLASHEx_Erase(&EraseInitStruct, &ErrorType) != HAL_OK){
+		return HAL_FLASH_GetError ();
+	}
+	while( sofar < NumberOfWords ){
+		if (HAL_FLASH_Program(ProgramType, StartAddress, DATA[sofar]) == HAL_OK){
+			StartAddress += IncAddress;
+			sofar++;
+		}
+		else{
 			return HAL_FLASH_GetError ();
 		}
-		while( sofar < numberofwords ){
-			if (HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, StartAddress, DATA_32[sofar]) == HAL_OK){
-				StartAddress += 4;  // use StartPageAddress += 2 for half word and 8 for double word
-				sofar++;
-			}
-			else{
-				return HAL_FLASH_GetError ();
-			}
-		}
+	}
 		HAL_FLASH_Lock();
-
 		return 0;
-
 }
 
-void Write_and_read_data::flashReadData(uint8_t *DATA_8){
+void Write_and_read_data::flashReadData(uint32_t *DATA_32){
 
-	volatile uint32_t DATA_32, index = 0 ;
+	uint32_t index = 0 ;
 	while (1){
-		DATA_32 = *( uint32_t*)(StartPageAddress+index);
-		if (DATA_32 == 0xffffffff){
-			DATA_32 = '\0';
+		*DATA_32 = *( uint32_t*)(StartPageAddress+index);
+		if (*DATA_32 == 0xffffffff){
+			*DATA_32 = '\0';
 			break;
 		}
-		DATA_8[index] = (uint8_t)DATA_32;
-		DATA_8[index + 1] = (uint8_t)(DATA_32 >> 8);
-		DATA_8[index + 2] = (uint8_t)(DATA_32 >> 16);
-		DATA_8[index + 3] = (uint8_t)(DATA_32 >> 24);
 		index += 4;
+		DATA_32++ ;
 	}
 }
 
@@ -123,11 +148,6 @@ uint32_t Write_and_read_data::getPage(uint32_t Address){
 	}
 	return -1;
 }
-
-void Write_and_read_data::clearMemory(){
-
-}
-
 Write_and_read_data::~Write_and_read_data() {
 	// TODO Auto-generated destructor stub
 }
